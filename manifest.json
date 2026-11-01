@@ -1,0 +1,21 @@
+
+{
+  "name": "Traduttore",
+  "short_name": "Traduttore",
+  "description": "Traduttore vocale e testuale",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#10172a",
+  "theme_color": "#10172a",
+  "lang": "it",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
