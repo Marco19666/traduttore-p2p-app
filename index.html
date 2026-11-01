@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101827">
+<title>Traduttore</title>
+<style>
+:root{--bg:#101827;--panel:#192538;--panel2:#223149;--text:#f3f6fc;--muted:#9eacc1;--blue:#478bff;--cyan:#36c8d9;--border:rgba(255,255,255,.09);--danger:#ff647c}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;padding:20px 14px 35px;background:radial-gradient(circle at 10% 0%,#203c61 0,transparent 35%),var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.app{width:100%;max-width:650px;margin:auto;display:none}
+header{text-align:center;margin:10px 0 25px}
+.logo{width:58px;height:58px;margin:0 auto 12px;border-radius:18px;display:grid;place-items:center;font-size:28px;background:linear-gradient(135deg,var(--blue),var(--cyan));box-shadow:0 8px 28px #3691ff40}
+h1{font-size:27px;margin:0;letter-spacing:-.7px}
+header p{color:var(--muted);margin:7px 0 0;font-size:14px}
+.panel{background:rgba(25,37,56,.94);border:1px solid var(--border);border-radius:20px;padding:17px;margin-bottom:15px;box-shadow:0 12px 35px #0002}
+.language-row{display:grid;grid-template-columns:1fr 48px 1fr;gap:9px;align-items:end}
+.field label{display:block;color:var(--muted);font-size:12px;margin:0 0 8px 3px}
+select{width:100%;min-width:0;padding:13px 9px;color:var(--text);background:var(--panel2);border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none}
+select:focus,textarea:focus,.online-input:focus{border-color:var(--blue)}
+.swap{height:44px;border:1px solid var(--border);border-radius:13px;background:var(--panel2);color:var(--cyan);font-size:22px;cursor:pointer}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px;font-weight:650}
+.counter{font-size:11px;color:var(--muted);font-weight:400}
+textarea{width:100%;min-height:125px;resize:vertical;padding:14px;border:1px solid var(--border);border-radius:13px;background:#111d2d;color:var(--text);font:inherit;font-size:15px;line-height:1.55;outline:none}
+textarea::placeholder{color:#73849b}
+.output{background:#14263a}
+.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}
+button{font-family:inherit}
+.btn{border:0;border-radius:12px;padding:12px 15px;font-size:13px;font-weight:650;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.btn:active,.swap:active{transform:scale(.97)}
+.btn:disabled{opacity:.55;cursor:wait}
+.primary{background:linear-gradient(135deg,var(--blue),#3474e7);color:white;flex:1}
+.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--border)}
+.mic{color:white;background:#a63855}
+.danger{color:#ff9aaa;background:#ff647c1f}
+.full{width:100%}
+.scan{background:linear-gradient(135deg,#087e91,#1762a5);color:white;flex:1}
+.conversation{background:linear-gradient(135deg,#087e91,#1762a5);color:white;width:100%;padding:15px;font-size:14px}
+.conversation.active{background:linear-gradient(135deg,#b52d4b,#8e285b)}
+.status{display:flex;align-items:center;gap:9px;padding:11px 4px;color:var(--muted);font-size:12px}
+.dot{width:8px;height:8px;border-radius:50%;background:#7e91a9;flex-shrink:0}
+.dot.ok{background:#3bd49a}.dot.busy{background:#ffc45b}.dot.error{background:var(--danger)}
+.history-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.history-head h2{font-size:15px;margin:0}
+.history-list{display:flex;flex-direction:column;gap:9px}
+.history-item{background:#111d2d;padding:12px;border-radius:12px;border:1px solid var(--border);cursor:pointer;text-align:left;color:var(--text);width:100%}
+.history-item small{color:var(--cyan);display:block;margin-bottom:5px}
+.history-item span{display:block;font-size:13px;overflow-wrap:anywhere}
+.empty{font-size:12px;color:var(--muted);text-align:center;padding:15px 0}
+footer{text-align:center;color:#74869d;font-size:11px;padding:12px}
+.splash{position:fixed;inset:0;z-index:99;background:radial-gradient(circle at 50% 20%,#203c61,#101827 65%);display:flex;align-items:center;justify-content:center;padding:25px}
+.splash-inner{width:100%;max-width:340px;text-align:center}
+.splash-logo{width:76px;height:76px;margin:0 auto 18px;border-radius:24px;background:linear-gradient(135deg,var(--blue),var(--cyan));display:grid;place-items:center;font-size:37px}
+.splash h1{font-size:28px}
+.splash p{color:var(--muted);font-size:13px}
+.progress-track{height:9px;border-radius:20px;background:#344256;overflow:hidden;margin:22px 0 10px}
+.progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--cyan));transition:width .25s;border-radius:20px}
+.progress-label{font-size:12px;color:var(--cyan)}
+.scan-input{display:none}
+.online-input{flex:1;min-width:0;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--panel2);color:var(--text);font:inherit;font-size:13px;outline:none;text-transform:uppercase;letter-spacing:2px;text-align:center;font-weight:700}
+.room-info{margin-top:12px;padding:12px;background:#111d2d;border-radius:12px;border:1px solid var(--border)}
+.room-code{font-size:22px;font-weight:700;letter-spacing:3px;color:var(--cyan);margin:4px 0;font-family:ui-monospace,monospace}
+.peer-status{font-size:11px;color:var(--muted);margin-bottom:6px}
+.transcript{margin-top:12px;max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px}
+.bubble{padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.45;max-width:88%}
+.bubble.me{align-self:flex-end;background:#1e3a5f;border:1px solid #478bff55}
+.bubble.peer{align-self:flex-start;background:#112236;border:1px solid #36c8d955}
+.bubble .who{font-size:10px;color:#9eacc1;margin-bottom:4px}
+.bubble .orig{color:var(--text)}
+.bubble .trans{margin-top:6px;color:var(--cyan)}
+.online-lang-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;padding:8px 10px;background:#111d2d;border-radius:10px;border:1px solid var(--border);font-size:12px;color:var(--muted)}
+.online-lang-row strong{color:var(--cyan);font-size:12px}
+@media(max-width:380px){.panel{padding:13px}.language-row{grid-template-columns:1fr 40px 1fr;gap:6px}select{font-size:11px}.btn{padding:11px 10px}}
+</style>
+</head>
+<body>
+
+<div class="splash" id="splash">
+  <div class="splash-inner">
+    <div class="splash-logo">🌐</div>
+    <h1>TRADUTTORE</h1>
+    <p>Traduci il mondo, senza confini</p>
+    <div class="progress-track"><div class="progress-bar" id="progress-bar"></div></div>
+    <div class="progress-label" id="progress-label">Preparazione dell'app...</div>
+    <p id="splash-detail">Caricamento del riconoscimento testo</p>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <header>
+    <div class="logo">🌐</div>
+    <h1>Traduttore</h1>
+    <p>Traduci, ascolta e comunica in tante lingue</p>
+  </header>
+
+  <div class="panel">
+    <div class="language-row">
+      <div class="field"><label for="source-lang">DA</label><select id="source-lang"></select></div>
+      <button class="swap" id="swap-btn" title="Inverti lingue">⇄</button>
+      <div class="field"><label for="target-lang">A</label><select id="target-lang"></select></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-title"><span>✍️ Testo da tradurre</span><span class="counter" id="char-count">0 caratteri</span></div>
+    <textarea id="input-text" placeholder="Scrivi qui il testo da tradurre..."></textarea>
+    <div class="actions">
+      <button class="btn mic" id="stt-btn">🎙️ Microfono</button>
+      <button class="btn scan" id="scan-btn">📷 Scansiona testo</button>
+      <button class="btn secondary" id="clear-btn">✕ Cancella</button>
+      <input class="scan-input" id="scan-input" type="file" accept="image/*" capture="environment">
+    </div>
+    <div class="actions"><button class="btn primary" id="translate-btn">🌍 Traduci</button></div>
+  </div>
+
+  <div class="panel">
+    <div class="section-title"><span>🌐 Traduzione modificabile</span></div>
+    <textarea id="output-text" class="output" placeholder="La traduzione apparirà qui..."></textarea>
+    <div class="actions">
+      <button class="btn secondary" id="tts-btn">🔊 Ascolta</button>
+      <button class="btn secondary" id="copy-btn">📋 Copia</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <button class="btn conversation" id="conversation-btn">🗣️ Avvia modalità conversazione</button>
+    <div class="status"><span class="dot" id="status-dot"></span><span id="status-text">Pronto per tradurre</span></div>
+  </div>
+
+  <div class="panel" id="online-panel">
+    <div class="section-title"><span>👥 Conversazione online</span></div>
+    <div class="online-lang-row">
+      <span>Tu parli:</span><strong id="online-src-label">—</strong>
+      <span>·</span>
+      <span>Peer parla:</span><strong id="online-dst-label">—</strong>
+    </div>
+    <div class="actions" style="margin-top:0">
+      <button class="btn secondary full" id="online-create">➕ Crea stanza</button>
+    </div>
+    <div class="actions">
+      <input class="online-input" id="online-code" placeholder="CODICE" maxlength="8">
+      <button class="btn primary" id="online-join" style="flex:0">🔗 Entra</button>
+    </div>
+    <div id="online-room-info" style="display:none">
+      <div class="room-info">
+        <div style="font-size:12px;color:var(--muted)">Stanza attiva</div>
+        <div class="room-code" id="online-room-code">—</div>
+        <div class="peer-status" id="online-peer-status">In attesa dell'altro utente…</div>
+        <div class="actions">
+          <button class="btn secondary full" id="online-copy">📋 Copia codice</button>
+          <button class="btn danger full" id="online-leave">🚪 Esci</button>
+        </div>
+      </div>
+    </div>
+    <div class="actions" id="online-chat-actions" style="display:none">
+      <button class="btn conversation" id="online-mic">🎙️ Parla e invia</button>
+    </div>
+    <div class="transcript" id="online-transcript"></div>
+  </div>
+
+  <div class="panel">
+    <div class="history-head">
+      <h2>🕘 Cronologia</h2>
+      <button class="btn danger" id="history-clear">Svuota</button>
+    </div>
+    <div class="history-list" id="history-list">
+      <div class="empty">Nessuna traduzione salvata</div>
+    </div>
+  </div>
+
+  <footer>Traduttore online · MyMemory · OCR Tesseract · P2P Trystero</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js" onerror="window.TESSERACT_LOAD_ERROR=true"></script>
+<script type="module">
+  import { joinRoom } from 'https://cdn.jsdelivr.net/npm/trystero@0.21/mqtt.min.js';
+  window.__trystero = { joinRoom };
+  window.dispatchEvent(new Event('trystero-ready'));
+</script>
+<script src="app.js"></script>
+</body>
+</html>
