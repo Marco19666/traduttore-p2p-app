@@ -344,46 +344,77 @@ async function onlineLeave(){
   $("online-mic").textContent="🎙️ Parla e invia";
   setPeerStatus("In attesa dell'altro utente…")
 }
+let trysteroLoadPromise=null;
+async function loadTrystero(){
+  if(window.__trystero&&typeof window.__trystero.joinRoom==="function")return window.__trystero;
+  if(!trysteroLoadPromise){
+    trysteroLoadPromise=import("https://esm.sh/@trystero-p2p/mqtt@0.25.4")
+      .then(mod=>{
+        if(typeof mod.joinRoom!=="function")throw new Error("La libreria P2P non espone joinRoom.");
+        window.__trystero={joinRoom:mod.joinRoom};
+        window.dispatchEvent(new Event("trystero-ready"));
+        return window.__trystero
+      })
+      .catch(err=>{
+        trysteroLoadPromise=null;
+        console.error("Caricamento Trystero fallito:",err);
+        throw new Error("Impossibile caricare la libreria P2P. Controlla la connessione e riprova.")
+      })
+  }
+  return trysteroLoadPromise
+}
 async function onlineJoin(code){
-  if(!window.__trystero){
-    setStatus("Libreria P2P non ancora caricata, riprova tra un istante","error");
+  setStatus("Caricamento libreria P2P…","busy");
+  let trystero;
+  try{
+    trystero=await loadTrystero()
+  }catch(e){
+    setStatus(e.message||"Libreria P2P non disponibile","error");
+    setPeerStatus("Caricamento P2P non riuscito","error");
     return
   }
   await onlineLeave();
-  ONLINE.code=code;
-  $("online-room-code").textContent=code;
-  show("online-room-info",!0);
-  setPeerStatus("Connessione ai relay P2P…");
-  const{joinRoom}=window.__trystero;
-  const room=joinRoom({appId:"traduttore-p2p-v1"},{roomId:code});
-  ONLINE.room=room;
-  const[sendUtterance,onUtterance]=room.makeAction("utterance");
-  ONLINE.sendUtterance=sendUtterance;
-  room.onPeerJoin(id=>{
-    ONLINE.peers.add(id);
-    setPeerStatus("Peer connesso ✓","ok");
-    show("online-chat-actions",!0)
-  });
-  room.onPeerLeave(id=>{
-    ONLINE.peers.delete(id);
-    if(ONLINE.peers.size===0){
-      setPeerStatus("Peer disconnesso, in attesa…");
-      show("online-chat-actions",!1)
-    }
-  });
-  onUtterance(async(data,id)=>{
-    try{
-      const{text,from}=data,myLang=src.value;
-      let translated=text;
-      if(from&&from!==myLang)translated=await translateText(text,from,myLang)||text;
-      addBubble("peer",text,translated);
-      speak(translated,myLang)
-    }catch(e){console.warn("peer msg",e)}
-  });
-  setTimeout(()=>{
-    if(ONLINE.room&&ONLINE.peers.size===0)
-      setPeerStatus("Nessun peer ancora. Condividi il codice.")
-  },8000)
+  try{
+    ONLINE.code=code;
+    $("online-room-code").textContent=code;
+    show("online-room-info",!0);
+    setPeerStatus("Connessione ai relay P2P…");
+    const room=trystero.joinRoom({appId:"traduttore-p2p-v1"},code);
+    ONLINE.room=room;
+    const utterance=room.makeAction("utterance");
+    ONLINE.sendUtterance=data=>utterance.send(data);
+    room.onPeerJoin=id=>{
+      ONLINE.peers.add(id);
+      setPeerStatus("Peer connesso ✓","ok");
+      show("online-chat-actions",!0)
+    };
+    room.onPeerLeave=id=>{
+      ONLINE.peers.delete(id);
+      if(ONLINE.peers.size===0){
+        setPeerStatus("Peer disconnesso, in attesa…");
+        show("online-chat-actions",!1)
+      }
+    };
+    utterance.onMessage=async(data)=>{
+      try{
+        if(!data||typeof data.text!=="string")return;
+        const{text,from}=data,myLang=src.value;
+        let translated=text;
+        if(from&&from!==myLang)translated=await translateText(text,from,myLang)||text;
+        addBubble("peer",text,translated);
+        speak(translated,myLang)
+      }catch(e){console.warn("peer msg",e)}
+    };
+    setTimeout(()=>{
+      if(ONLINE.room&&ONLINE.peers.size===0)
+        setPeerStatus("Nessun peer ancora. Condividi il codice.")
+    },8000)
+  }catch(e){
+    console.error("Errore ingresso stanza P2P:",e);
+    await onlineLeave();
+    setStatus("Impossibile creare o raggiungere la stanza P2P","error");
+    setPeerStatus("Errore di connessione","error")
+  }
 }
 $("online-create").addEventListener("click",async()=>{
   const code=onlineId();
