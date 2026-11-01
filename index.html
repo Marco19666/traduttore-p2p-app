@@ -173,11 +173,7 @@ footer{text-align:center;color:#74869d;font-size:11px;padding:12px}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js" onerror="window.TESSERACT_LOAD_ERROR=true"></script>
-<script type="module">
-  import { joinRoom } from 'https://cdn.jsdelivr.net/npm/trystero@0.21/mqtt.min.js';
-  window.__trystero = { joinRoom };
-  window.dispatchEvent(new Event('trystero-ready'));
-</script>
+<!-- Trystero viene caricato on-demand da app.js quando si crea o si entra in una stanza. -->
 <script src="app.js"></script>
 </body>
 </html>
